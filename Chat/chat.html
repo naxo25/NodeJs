@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Sala de chat</title>
+  <style>
+	body{font-family: Arial;}
+  </style>
+</head>
+<body>
+  <h3>Mensajes:</h3>
+  <ul id="listado-msjs">
+    
+  </ul>
+  <div id="env-msjs">
+    <img src="" width="200px" height="200px" id="foto" />
+	  <input id="nuevo-msj"  placeholder="Nuevo mensaje">
+	  <button id="btn-msj" onclick="enviarMensaje()">Enviar</button>
+    <input id="nuevo-foto" type='file' onchange="enviarFoto(event)"/>
+    <button id="btn-foto" >Enviar</button>
+
+  </div>
+  
+  <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    var socket = io(); // Inicializamos socketIO en el cliente
+    let imageData;
+    
+    
+    socket.on('nuevo mensaje', function (msj) {
+      $('#listado-msjs').append( $('<li>').text(msj) );
+    });
+
+    socket.on('nuevo foto', function (res) {
+      //$('#listado-msjs').append( $('<li>').text(res) );
+    var preview = document.getElementById('foto');
+    preview.src = res;
+
+    });
+    function enviarFoto(event) {
+        data = event.target.files[0];
+        var reader = new FileReader();
+         reader.onload = function(evt){
+             var msg ={};
+             msg = evt.target.result;
+             socket.emit('nuevo foto', msg);
+         };
+         reader.readAsDataURL(data);
+    };
+    function enviarMensaje() {
+        socket.emit('nuevo mensaje', $('#nuevo-msj').val());
+        $('#nuevo-msj').val('');
+    };
+  </script>
+</body>
+</html>
