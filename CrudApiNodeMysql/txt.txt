@@ -1,0 +1,5 @@
+importe api.sql
+
+nodemon src/app.js o npm run dev
+
+abra alguno de los archivos en src/frontend
