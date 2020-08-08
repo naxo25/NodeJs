@@ -7,7 +7,6 @@
     <title> VueJs NodeJs MySql </title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
 
 </head>
 <body>
@@ -18,7 +17,6 @@
             <table>
                 <thead>
                     <tr>
-                    	<th>Foto</th>
                         <th>Titulo</th>
                         <th>Url</th>
                         <th>Id</th>
@@ -27,9 +25,6 @@
                 </thead>
                 <tbody>
                     <tr v-for="(tarea, index) in tareas" :key='tarea.id'>
-                        <td>
-                        	<img :src="tarea.img != null ? tarea.img : noimg" style="width: 30px; border-radius: 43%; cursor: pointer" @click='idFoto = tarea.id, id=index, opFoto()' :id='index' />
-                        </td>
                         <td width="35%">
                             <span v-if="formActualizar && idActualizar == index">
                                 <input v-model="formDataActualizar.title" type="text" required>
@@ -88,7 +83,9 @@
             </form>
         </section>
 
-        <input hidden filled hint="Native file" id='subir' type="file" @change="changeFoto" accept="image/*" />
+        <form action="/" method="POST" enctype='multipart/form-data'>
+        	<input hidden id='subir' type="file" @change="changeFoto" accept="image/*" name="image" />
+		</form>
 
     </div> <!-- div app -->
 
@@ -118,7 +115,7 @@
             tareas: {},
             noimg: 'https://i.blogs.es/99f0c0/vue/450_1000.png',
             urlFoto: "http://localhost/rutaApi/change_photo.php",
-            url: "http://localhost:3000/backendnode/"
+            url: "http://localhost:4000/backendnode/"
         },
         created: function(){
         	this.listar();
@@ -162,8 +159,16 @@
                   reader.onload = function(evt){
                       let foto = document.getElementById(index);
                       foto.src = evt.target.result;
-                      axios.put("http://localhost:3000/backendnode/imagen/"+ id, evt);
+                      let formData = new FormData();
+                      formData.append('fichero', evt.target.result);
+                      formData.append('name',id);   
+                      console.log(formData.name)
+                      console.log(formData.fichero)
+                      axios.post("http://localhost:3000/imagen/upload", evt).then(response => {
+                      		console.log(response)
+                      });
                   };
+
                   reader.readAsDataURL(foto);
               },    
 

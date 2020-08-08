@@ -1,5 +1,7 @@
 importe api.sql
+inicie localhost con mysql
 
 nodemon src/app.js o npm run dev
+servidor nodejs se inicia en puerto 4000
 
-abra alguno de los archivos en src/frontend
+en src/frontend se encuentran proyectos en vue y react

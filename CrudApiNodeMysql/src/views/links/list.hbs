@@ -9,7 +9,7 @@
                             {{title}}
                         </h3>
                     </a>
-                    <p class="m-2">{{description}}</p>
+                    <p class="m-2">{{url}}</p>
                     <p class="text-muted">
                         {{timeago created_at}}
                     </p>
@@ -30,5 +30,14 @@
             </div>
         </div>
         {{/each}}
-    </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <a class="btn btn" href="/links/add">
+                    <div class="card-body" style='margin:40px; font-size:30px'>
+                        + 
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>    
 </div>

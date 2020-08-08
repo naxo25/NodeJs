@@ -37,11 +37,4 @@ router.get('/', async (req, res) => {
     res.send({nodejs});
 });
 
-router.put('/imagen/:id', async(req,res) => {
-    const { id } = req.params;
-    const foto  = req.body; 
-    //await pool.query('update nodejs set ? where id = ?',[newFoto, id]);
-    //res.sendFile(path.join(__dirname, "../public/img/image.png"));
-});
-
 module.exports = router;
