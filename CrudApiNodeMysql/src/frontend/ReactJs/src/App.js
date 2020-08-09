@@ -17,8 +17,8 @@ function App() {
     <div className="App">
       <header className="App-header">
         
-        <Mycomponente title="Titulo" mytext="asdasd componente" />
         <img src={logo} className="App-logo" alt="logo" />
+        <Mycomponente title="Titulo" mytext="asdasd componente" />
 
       </header>
     </div>
