@@ -2,56 +2,207 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Sala de chat</title>
+  <title>Crud en tiempo real, VueJs, socketIo, nodejs</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <style>
 	body{font-family: Arial;}
   </style>
 </head>
+
 <body>
-  <h3>Mensajes:</h3>
-  <ul id="listado-msjs">
-    
-  </ul>
-  <div id="env-msjs">
-    <img src="" width="200px" height="200px" id="foto" />
-	  <input id="nuevo-msj"  placeholder="Nuevo mensaje">
-	  <button id="btn-msj" onclick="enviarMensaje()">Enviar</button>
-    <input id="nuevo-foto" type='file' onchange="enviarFoto(event)"/>
-    <button id="btn-foto" >Enviar</button>
+  <div id="app" class="container">  
 
-  </div>
+    <div v-if='noname == true'>
+      <p>Tu Nombre:</p>
+      <input v-model='Nombre' placeholder="Nuevo Nombre" autofocus>
+      <a @click="newUser" class="waves-effect waves-light btn-small">Entra al Chat</a>            
+    </div>
+    <div v-else>
+
+    <div style="height:600px; overflow: scroll; overflow-x: hidden;">
+        <div class="row">
+          <table>
+              <thead>
+                  <tr>
+                      <th>Usuario</th>
+                      <th>Mensaje</th>
+                      <th>Opciones</th>
+                  </tr>
+              </thead>
+              <tbody v-for="(tarea, index) in tareas" :key='tarea.id'>
+                  <tr>
+                      <td width="35%">
+                          {{ tarea.usuario }}
+                      </td>
+                      <td width="35%">
+                          <span v-if="Actualizando && idActualizar == index">
+                              <input v-model="formDatosActualizar.mensaje" type="url" required>
+                          </span>
+                          <span v-else>
+                              {{ tarea.mensaje }}
+                              <img v-if='tarea.imagen' :src="tarea.imagen" height="100" />
+                          </span>
+                      </td>
+
+                      <td>
+                          <span v-if="Actualizando && idActualizar == index">
+                              <a @click="editar(tarea, index), Actualizando = false" class="waves-effect waves-light btn-small">
+                              Guardar</a>
+                              <a @click="Actualizando = false" class="waves-light waves-effect btn-small">Cancelar</a>
+                          </span>
+                          <span v-else>
+                              <a @click="verFormActualizar(index)" class="waves-effect waves-light btn-small">
+                              Actualizar</a>
+
+                              <a @click="borrar(tarea, index)" class="waves-effect waves-light btn-small">Borrar</a>
+                          </span>
+                      </td>
+
+                      <td>
+                      </td>
+                  </tr>
+              </tbody>
+          </table>
+        </div>
+    </div>
+            
+        <img id="foto" />
+        <i class="material-icons prefix">edit</i> <b>Usuario {{ Nombre }}</b> 
+        <input v-model='msj' placeholder="Nuevo mensaje" autofocus>
+        <a @click="save" class="waves-effect waves-light btn-small">Añadir</a>
+        <a onclick="subir.click()" class="waves-effect waves-light btn-small">Foto</a>
+
+        <form action="/" method="POST" enctype='multipart/form-data'>
+          <input hidden id='subir' type="file" @change="enviarFoto" accept="image/*" name="image" />
+        </form>
+
+    </div>
+
+</div>
   
-  <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
-  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/push.js/0.0.11/push.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
   <script>
-    var socket = io(); // Inicializamos socketIO en el cliente
-    let imageData;
-    
-    
-    socket.on('nuevo mensaje', function (msj) {
-      $('#listado-msjs').append( $('<li>').text(msj) );
-    });
 
-    socket.on('nuevo foto', function (res) {
-      //$('#listado-msjs').append( $('<li>').text(res) );
-    var preview = document.getElementById('foto');
-    preview.src = res;
+        var socket = io();
+        new Vue({
+        el: '#app',
+        data: {
+          noname: true,
+          Nombre: '',
+          id: '',
+          idFoto: '',
+          msj: '',
+            formDatosActualizar: {
+              title: '',
+              url: ''
+            },
+            formData: {
+              title: '',
+              url: ''
+            },
+            tarea_id: '',
+            Actualizando: false,
+            idActualizar: -1,
+            tareas: {},
+            noimg: 'https://i.blogs.es/99f0c0/vue/450_1000.png',
+            urlFoto: "http://localhost/rutaApi/change_photo.php",
+            url: "http://localhost:4000/listar"
+        },
+        mounted() {
+          if (localStorage.Nombre){ 
+            this.noname = false;
+            this.Nombre = localStorage.Nombre;
+          }
+        },
+        created() {
+                  let imageData;
 
-    });
-    function enviarFoto(event) {
-        data = event.target.files[0];
-        var reader = new FileReader();
-         reader.onload = function(evt){
-             var msg ={};
-             msg = evt.target.result;
-             socket.emit('nuevo foto', msg);
-         };
-         reader.readAsDataURL(data);
-    };
-    function enviarMensaje() {
-        socket.emit('nuevo mensaje', $('#nuevo-msj').val());
-        $('#nuevo-msj').val('');
-    };
+                  socket.on('update mensaje', (msj, id) => {
+                    this.tareas[id].mensaje = msj;
+                  });
+                  
+                  const noti = (datos) => {
+                    if (datos.usuario !== localStorage.Nombre) {
+                      Push.create(datos.usuario, {
+                        body: datos.mensaje,
+                        icon: 'https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcSD3wHmiqgfbeoJurg2MdZZPTPWnsnqlCaPjA&usqp=CAU',
+                        timeout: 3000,
+                        onClick: function () {
+                          this.close();
+                        }
+                      });
+                    }
+                  };
+
+                  socket.on('nuevo mensaje', (datos) => {
+                    this.tareas.push({ usuario: datos.usuario, mensaje: datos.mensaje });
+                      noti(datos);
+                  });
+
+                  socket.on('borrar', (id) => {
+                    this.tareas.splice(id, 1);
+                  });
+
+                  socket.on('nuevo foto', (datos) => {
+                    this.tareas.push({ usuario: datos.usuario, imagen: datos.imagen });
+                    datos.mensaje = 'Foto';
+                    noti(datos);
+                  });
+
+                  this.listar();                    
+        },
+        methods: {
+                listar (){
+                  axios.get('http://localhost:4000/listar').then(response => {
+                    this.tareas = response.data;
+                  });                  
+                },
+                save (){
+                    socket.emit('nuevo mensaje', this.Nombre, this.msj);
+                    this.msj = '';
+                },
+                editar(tarea, index){
+                    socket.emit('update mensaje', this.formDatosActualizar.mensaje, this.idActualizar);
+                    this.ocultarActualizar()
+                },
+                borrar(tarea, index){
+                    var r = confirm("¿Está seguro de borrar el registro ?");
+                    if (r == true) { 
+                        socket.emit('borrar', index);
+                    }
+                }, 
+                enviarFoto(event) {                  
+                    data = event.target.files[0];
+                    var reader = new FileReader();
+                     reader.onload = function(evt){
+                         var msg ={};
+                         msg = evt.target.result;
+                         socket.emit('nuevo foto', localStorage.Nombre, msg);
+                     };
+                    reader.readAsDataURL(data);
+                },
+
+                    verFormActualizar (tarea_id) {
+                        this.idActualizar = tarea_id;
+                        this.formDatosActualizar.mensaje = this.tareas[tarea_id].mensaje;
+                        this.Actualizando = true;
+                    },
+                    ocultarActualizar () {
+                        this.Actualizando = false;
+                    },
+                newUser() {
+                  //this.Nombre = newUser;
+                  localStorage.Nombre = this.Nombre;
+                  this.noname = false;
+                }
+
+            }
+    });  
+
   </script>
 </body>
 </html>
